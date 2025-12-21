@@ -1,0 +1,405 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #1f2933;
+}
+
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  background-color: white;
+  padding: 30px;
+  width: 360px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+
+.title {
+  text-align: center;
+  color: #1e40af;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 24px;
+}
+
+.info {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 14px;
+  color: #64748b;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.back-btn:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.info {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 12px;
+  color: #64748b;
+}
+
+
+/* token generator bank logo */
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo-container img {
+  width: 60px;
+  margin-bottom: 6px;
+}
+
+.bank-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+
+/* token generator page bg image */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-image: linear-gradient(
+      rgba(248, 250, 252, 0.7),
+      rgba(248, 250, 252, 0.7)
+    ),
+    url("./assets/bank-bg.jpg");
+
+  background-size: cover;
+  background-position: center;
+}
+
+
+
+
+
+
+
+
+/* Mobile (default) already covered */
+
+/* Tablets */
+@media (min-width: 768px) {
+  .card {
+    width: 400px;
+    padding: 35px;
+  }
+}
+
+/* Laptops & desktops */
+@media (min-width: 1024px) {
+  .card {
+    width: 420px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+}
+
+
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeUp 0.6s ease-out;
+}
+
+@media (max-width: 480px) {
+  .card {
+    width: 92%;
+    padding: 24px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .btn {
+    padding: 14px;
+    font-size: 17px;
+  }
+}
+
+
+
+
+/* generate button design */
+.btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background-color: #1e40af;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+
+
+/* ===================== */
+/* KIOSK DISPLAY STYLES */
+/* ===================== */
+
+.kiosk-wrapper {
+  min-height: 100vh;
+  background-color: #020617;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.kiosk-header {
+  text-align: center;
+  padding: 20px;
+  background-color: #020617;
+}
+
+.kiosk-header h1 {
+  font-size: 40px;
+  letter-spacing: 2px;
+}
+
+.kiosk-header p {
+  font-size: 16px;
+  color: #cbd5f5;
+}
+
+.kiosk-body {
+  flex: 1;
+  text-align: center;
+  padding: 20px;
+}
+
+.now-serving {
+  font-size: 32px;
+  margin-bottom: 30px;
+  color: #93c5fd;
+}
+
+.counter-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.counter-card {
+  background-color: #0f172a;
+  border-radius: 12px;
+  padding: 30px;
+}
+
+.counter-name {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #e0f2fe;
+}
+
+.token-big {
+  font-size: 60px;
+  font-weight: bold;
+  color: #38bdf8;
+}
+
+.kiosk-footer {
+  text-align: center;
+  padding: 15px;
+  background-color: #020617;
+  font-size: 14px;
+  color: #cbd5f5;
+}
+
+
+
+/* ===================== */
+/* ADMIN DASHBOARD UI   */
+/* ===================== */
+
+.admin-wrapper {
+  padding: 30px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.admin-title {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #1e293b;
+}
+
+.counter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.counter-panel {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.counter-panel h2 {
+  margin-bottom: 10px;
+  color: #1e40af;
+}
+
+.current-token {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.queue-list {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 100px;
+  margin-bottom: 12px;
+}
+
+.queue-token {
+  padding: 6px 8px;
+  background-color: #eff6ff;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.empty {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.call-btn {
+  background-color: #2563eb;
+  color: white;
+}
+
+.serve-btn {
+  background-color: #16a34a;
+  color: white;
+}
+
+.skip-btn {
+  background-color: #dc2626;
+  color: white;
+}

@@ -1,32 +1,70 @@
-// Professional token ID generator
-// Format: YYYYMMDD-HHMMSS-XXX (e.g., 20251220-143052-001)
-// Prevents collisions by using timestamp + random suffix
+import { redisClient, getIsConnected } from "../config/redis.js";
 
-export const generateTokenId = () => {
+/**
+ * Get daily counter from Redis
+ * Counter resets daily and starts from 1 each day
+ * Format: daily_counter:YYYYMMDD
+ */
+const getDailyCounter = async () => {
+  if (!getIsConnected()) {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10).replace(/-/g, "");
+    const time = now.toTimeString().slice(0, 8).replace(/:/g, "");
+    return `${date}${time.slice(0, 4)}`;
+  }
+
   const now = new Date();
+  const dateKey = now.toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
   
-  // Format: YYYYMMDD
-  const date = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const counterKey = `daily_counter:${dateKey}`;
   
-  // Format: HHMMSS
-  const time = now.toTimeString().slice(0, 8).replace(/:/g, "");
-  
-  // Random 3-digit suffix to prevent collisions (even if same millisecond)
-  const randomSuffix = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, "0");
-  
-  return `${date}-${time}-${randomSuffix}`;
+  try {
+    
+    const count = await redisClient.incr(counterKey);
+    
+    
+    if (count === 1) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const ttl = Math.floor((tomorrow - now) / 1000); 
+      await redisClient.expire(counterKey, ttl);
+    }
+    
+    return count;
+  } catch (error) {
+    console.error("Error getting daily counter:", error);
+    
+    const time = now.toTimeString().slice(0, 8).replace(/:/g, "");
+    return parseInt(time.slice(0, 4), 10); 
+  }
 };
 
-// Generate token number for display (shorter format)
-export const generateTokenNumber = (serviceId) => {
-  // Format: Service prefix + timestamp + random
-  // e.g., DEP-143052-42
-  const servicePrefix = serviceId.substring(0, 3).toUpperCase();
+
+export const generateTokenId = async () => {
   const now = new Date();
-  const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
-  const random = Math.floor(Math.random() * 100).toString().padStart(2, "0");
+  const date = now.toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
   
-  return `${servicePrefix}-${timeStr}-${random}`;
+ 
+  const dailyCount = await getDailyCounter();
+  
+  // Format: YYYYMMDD-XXX (where XXX is 3-digit daily counter)
+  const counterStr = dailyCount.toString().padStart(3, "0");
+  
+  return `${date}-${counterStr}`; // Max 11 characters
+};
+
+/**
+ * Generate token number for display
+ * Format: Service prefix + daily counter (e.g., DEP-001)
+ * Uses the same daily counter as token_id for consistency
+ */
+export const generateTokenNumber = async (serviceId) => {
+  const servicePrefix = serviceId.substring(0, 3).toUpperCase();
+  
+  // Get daily counter (same as token_id)
+  const dailyCount = await getDailyCounter();
+  const counterStr = dailyCount.toString().padStart(3, "0");
+  
+  return `${servicePrefix}-${counterStr}`;
 };

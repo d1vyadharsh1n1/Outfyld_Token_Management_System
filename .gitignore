@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Environment variables
 .env
@@ -19,6 +18,8 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+docs/
 
 # Debug logs
-.cursor/debug.log
+.cursor/
+scripts/

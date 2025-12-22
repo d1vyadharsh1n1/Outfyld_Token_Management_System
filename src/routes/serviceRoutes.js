@@ -1,13 +1,14 @@
 import express from "express";
 import {
-  createService,
+ createService,
   getServices,
   updateService,
   deleteService,
   generateToken,
   callNextToken,
   serveToken,
-  skipTokenCall
+  skipTokenCall,
+  getCounters
 } from "../controllers/serviceController.js";
 
 const router = express.Router();
@@ -18,9 +19,12 @@ router.get("/", getServices);
 router.put("/:id", updateService);
 router.delete("/:id", deleteService);
 
+// Counter routes
+router.get("/counters", getCounters);
+
 // Token routes
 router.post("/token", generateToken);
-router.get("/token/next/:service", callNextToken);
+router.get("/token/next/:counter_id", callNextToken);
 router.post("/token/serve", serveToken);
 router.post("/token/skip", skipTokenCall);
 

@@ -29,8 +29,10 @@ app.use("/token", tokenRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  res.status(500).json({
-    error: err.message
+  console.error("Error:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || "Internal server error"
   });
 });
 

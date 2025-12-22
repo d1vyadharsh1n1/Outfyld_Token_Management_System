@@ -1,4 +1,4 @@
-import { createToken, serveNextToken, markTokenServed, skipToken } from "../services/tokenService.js";
+import { createToken, serveNextToken, markTokenServed, skipToken, getCountersWithQueues } from "../services/tokenService.js";
 import { broadcastToKiosk, broadcastToAdmin } from "../sockets/queueSocket.js";
 import { Service, Counter } from "../models/index.js";
 
@@ -21,7 +21,8 @@ export const getServices = async (req, res) => {
   try {
     const services = await Service.findAll({
       where: { is_active: true },
-      order: [["name", "ASC"]]
+      order: [["name", "ASC"]],
+      attributes: ["service_id", "name", "avg_duration_minutes", "is_active"]
     });
     
     res.status(200).json({
@@ -62,7 +63,6 @@ export const generateToken = async (req, res) => {
   try {
     const token = await createToken(req);
     
-    // Broadcast new token ONLY to admin dashboard (customers don't need to see every print)
     broadcastToAdmin("token:generated", {
       token,
       timestamp: new Date().toISOString()
@@ -83,13 +83,18 @@ export const generateToken = async (req, res) => {
 
 export const callNextToken = async (req, res) => {
   try {
-    const { service } = req.params;
-    const counterId = parseInt(req.query.counter_id) || parseInt(req.body.counter_id) || null;
+    const counterId = parseInt(req.params.counter_id) || parseInt(req.query.counter_id) || parseInt(req.body.counter_id);
     
-    const next = await serveNextToken(service, counterId);
+    if (!counterId) {
+      return res.status(400).json({
+        success: false,
+        error: "counter_id is required"
+      });
+    }
+    
+    const next = await serveNextToken(counterId);
     
     if (next) {
-      // Broadcast to KIOSK (everyone needs to see who is next)
       broadcastToKiosk("token:called", {
         counterId: next.counter_id,
         counterName: next.counter_name,
@@ -102,11 +107,12 @@ export const callNextToken = async (req, res) => {
         timestamp: new Date().toISOString()
       });
       
-      // Also notify admin dashboard
       broadcastToAdmin("queue:update", {
         counterId: next.counter_id,
         currentToken: next.tokenNumber,
         token_id: next.token_id,
+        service_id: next.service_id,
+        service_name: next.service_name,
         action: "called"
       });
       
@@ -117,7 +123,7 @@ export const callNextToken = async (req, res) => {
     } else {
       res.status(404).json({ 
         success: false,
-        message: "No tokens in queue for this service" 
+        message: `No tokens in queue for counter ${counterId}` 
       });
     }
   } catch (error) {
@@ -186,6 +192,23 @@ export const skipTokenCall = async (req, res) => {
     });
   } catch (error) {
     console.error("Skip token error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+export const getCounters = async (req, res) => {
+  try {
+    const counters = await getCountersWithQueues();
+    
+    res.json({
+      success: true,
+      data: counters
+    });
+  } catch (error) {
+    console.error("Get counters error:", error);
     res.status(500).json({
       success: false,
       error: error.message

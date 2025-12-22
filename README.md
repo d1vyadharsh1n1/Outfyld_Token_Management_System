@@ -115,20 +115,6 @@ npm run dev
 - `POST /services/token/serve` - Mark token as served
 - `POST /services/token/skip` - Skip a token
 
-## Queue Architecture
-
-The system uses **counter-based queues** where each counter maintains its own independent queue in Redis. Tokens are assigned to counters based on:
-1. Service requirements (counter must support the service)
-2. Counter availability (counter must be open)
-3. Load balancing (first available counter)
-
-## Documentation
-
-See the `docs/` folder for detailed documentation:
-- `QUICK_START.md` - Quick setup guide
-- `COMPLETE_GUIDE.md` - Complete system guide
-- `REDIS_POSTGRES_INTEGRATION.md` - Integration details
-- `PROJECT_STRUCTURE.md` - Detailed project structure
 
 ## Development
 

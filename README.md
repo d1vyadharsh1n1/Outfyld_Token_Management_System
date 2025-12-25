@@ -33,7 +33,6 @@ Token_Management_System/
 │   ├── utils/             # Utility functions
 │   ├── app.js             # Express app setup
 │   └── server.js          # Server entry point
-├── queue-management-frontend-main/  # Frontend React application
 ├── migrations/            # Database migrations
 ├── seeders/              # Database seeders
 ├── docs/                 # Documentation files
@@ -94,12 +93,6 @@ npm run seed
 npm run dev
 ```
 
-7. Start the frontend (in a separate terminal):
-```bash
-cd queue-management-frontend-main
-npm install
-npm run dev
-```
 
 ## API Endpoints
 

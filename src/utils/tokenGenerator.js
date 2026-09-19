@@ -1,70 +1,54 @@
 import { redisClient, getIsConnected } from "../config/redis.js";
 
 /**
- * Get daily counter from Redis
- * Counter resets daily and starts from 1 each day
- * Format: daily_counter:YYYYMMDD
+ * Fetches and atomically increments the daily counter.
+ * Calls Redis INCR once per customer.
  */
-const getDailyCounter = async () => {
-  if (!getIsConnected()) {
-    const now = new Date();
-    const date = now.toISOString().slice(0, 10).replace(/-/g, "");
-    const time = now.toTimeString().slice(0, 8).replace(/:/g, "");
-    return `${date}${time.slice(0, 4)}`;
-  }
-
+export const getDailyCounter = async () => {
   const now = new Date();
   const dateKey = now.toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
-  
   const counterKey = `daily_counter:${dateKey}`;
-  
+
+  if (!getIsConnected()) {
+    // Fallback if Redis is down: generate time-based pseudo-counter
+    const time = now.toTimeString().slice(0, 8).replace(/:/g, "");
+    return parseInt(time.slice(0, 4), 10);
+  }
+
   try {
-    
     const count = await redisClient.incr(counterKey);
-    
-    
+
+    // Set expiration on first token of the day
     if (count === 1) {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
-      const ttl = Math.floor((tomorrow - now) / 1000); 
+      const ttl = Math.floor((tomorrow - now) / 1000);
       await redisClient.expire(counterKey, ttl);
     }
-    
+
     return count;
   } catch (error) {
-    console.error("Error getting daily counter:", error);
-    
+    console.error("Redis INCR failed:", error.message);
     const time = now.toTimeString().slice(0, 8).replace(/:/g, "");
-    return parseInt(time.slice(0, 4), 10); 
+    return parseInt(time.slice(0, 4), 10);
   }
 };
 
-
-export const generateTokenId = async () => {
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
-  
- 
-  const dailyCount = await getDailyCounter();
-  
-  // Format: YYYYMMDD-XXX (where XXX is 3-digit daily counter)
+/**
+ * Format internal Token ID: YYYYMMDD-XXX
+ */
+export const formatTokenId = (dailyCount, date = new Date()) => {
+  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
   const counterStr = dailyCount.toString().padStart(3, "0");
-  
-  return `${date}-${counterStr}`; // Max 11 characters
+  return `${dateStr}-${counterStr}`;
 };
 
 /**
- * Generate token number for display
- * Format: Service prefix + daily counter (e.g., DEP-001)
- * Uses the same daily counter as token_id for consistency
+ * Format customer-facing Token Number: PRE-XXX
  */
-export const generateTokenNumber = async (serviceId) => {
+export const formatTokenNumber = (serviceId, dailyCount) => {
   const servicePrefix = serviceId.substring(0, 3).toUpperCase();
-  
-  // Get daily counter (same as token_id)
-  const dailyCount = await getDailyCounter();
   const counterStr = dailyCount.toString().padStart(3, "0");
-  
   return `${servicePrefix}-${counterStr}`;
 };

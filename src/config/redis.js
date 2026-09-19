@@ -11,9 +11,13 @@ const connectionState = {
   isConnected: false
 };
 
-redisClient.on("connect", () => {
+redisClient.on("ready", () => {
   console.log("Redis connected");
   connectionState.isConnected = true;
+});
+
+redisClient.on("connect", () => {
+  console.log("Redis connection initiated");
 });
 
 redisClient.on("error", (err) => {
@@ -21,6 +25,10 @@ redisClient.on("error", (err) => {
   console.log(
     "Server will continue without Redis. Please start Redis for queue functionality."
   );
+  connectionState.isConnected = false;
+});
+
+redisClient.on("end", () => {
   connectionState.isConnected = false;
 });
 
@@ -36,6 +44,27 @@ redisClient.connect().catch((err) => {
 export const getIsConnected = () => connectionState.isConnected;
 export const isConnected = () => connectionState.isConnected;
 
+/**
+ * Event-driven readiness probe for server startup
+ */
+export const waitForRedisReady = (timeoutMs = 5000) => {
+  return new Promise((resolve, reject) => {
+    if (redisClient.isReady) {
+      connectionState.isConnected = true;
+      return resolve(true);
+    }
+
+    const timer = setTimeout(() => {
+      reject(new Error("Redis connection timed out"));
+    }, timeoutMs);
+
+    redisClient.once("ready", () => {
+      clearTimeout(timer);
+      connectionState.isConnected = true;
+      resolve(true);
+    });
+  });
+};
 
 const getCounterQueueKey = (counterId) => `counter:${counterId}`;
 
@@ -57,6 +86,38 @@ export const getNextFromQueue = async (counterId) => {
   return data ? JSON.parse(data) : null;
 };
 
+/**
+ * ATOMIC REMOVAL FIX:
+ * Uses native LREM. Matches and deletes target tokens in a single
+ * atomic operation without dropping or locking the key in JS runtime.
+ */
+export const removeFromQueue = async (counterId, token_id) => {
+  if (!connectionState.isConnected) {
+    throw new Error("Redis is not connected. Cannot remove from queue.");
+  }
+
+  const queueKey = getCounterQueueKey(counterId);
+  const allItems = await redisClient.lRange(queueKey, 0, -1);
+
+  // Find exact string representation to remove
+  const targetItem = allItems.find((raw) => {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed.token_id === token_id;
+    } catch {
+      return false;
+    }
+  });
+
+  if (targetItem) {
+    // LREM key count element: count = 1 removes the first matching entry
+    const removedCount = await redisClient.lRem(queueKey, 1, targetItem);
+    return removedCount > 0;
+  }
+
+  return false;
+};
+
 export const getQueueLength = async (counterId) => {
   if (!connectionState.isConnected) {
     return 0;
@@ -72,35 +133,6 @@ export const getAllFromQueue = async (counterId) => {
   const queueKey = getCounterQueueKey(counterId);
   const data = await redisClient.lRange(queueKey, 0, -1);
   return data.map((item) => JSON.parse(item));
-};
-
-
-export const removeFromQueue = async (counterId, token_id) => {
-  if (!connectionState.isConnected) {
-    throw new Error("Redis is not connected. Cannot remove from queue.");
-  }
-  
-  const queueKey = getCounterQueueKey(counterId);
-  
-  // Get all items from queue
-  const allItems = await redisClient.lRange(queueKey, 0, -1);
-  
-  // Find and remove the token
-  for (let i = 0; i < allItems.length; i++) {
-    const item = JSON.parse(allItems[i]);
-    if (item.token_id === token_id) {
-      await redisClient.del(queueKey);
-      
-      for (let j = 0; j < allItems.length; j++) {
-        if (j !== i) {
-          await redisClient.rPush(queueKey, allItems[j]);
-        }
-      }
-      return true;
-    }
-  }
-  
-  return false; 
 };
 
 
